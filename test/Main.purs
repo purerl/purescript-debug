@@ -25,6 +25,8 @@ main = do
   let dummy = spy "dummy" { foo: 1, bar: [1, 2] }
   traceM dummy
 
+  traceM "³€½²³æßðđ"
+
   where
   effInt :: Effect Int
   effInt = pure 0
