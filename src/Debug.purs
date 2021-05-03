@@ -4,12 +4,9 @@ module Debug
   , traceM
   , spy
   , spyWith
-  , debugger
   ) where
 
 import Prelude
-
-import Data.Function.Uncurried (Fn2, Fn1, runFn1, runFn2)
 import Prim.TypeError (class Warn, Text)
 
 -- | Nullary class used to raise a custom warning for the debug functions.
@@ -29,9 +26,9 @@ instance warn :: Warn (Text "Debug function usage") => DebugWarning
 -- | doSomething = trace "Hello" \_ -> ... some value or computation ...
 -- | ```
 trace :: forall a b. DebugWarning => a -> (Unit -> b) -> b
-trace a k = runFn2 _trace a k
+trace a k = _trace a k
 
-foreign import _trace :: forall a b. Fn2 a (Unit -> b) b
+foreign import _trace :: forall a b. a -> (Unit -> b) -> b
 
 -- | Log any PureScript value to the console and return the unit value of the
 -- | Monad `m`.
@@ -45,9 +42,9 @@ traceM s = do
 -- | expression, as you can insert this into the expression without having to
 -- | break it up.
 spy :: forall a. DebugWarning => String -> a -> a
-spy tag a = runFn2 _spy tag a
+spy tag a = _spy tag a
 
-foreign import _spy :: forall a. Fn2 String a a
+foreign import _spy :: forall a. String -> a -> a
 
 -- | Similar to `spy`, but allows a function to be passed in to alter the value
 -- | that will be printed. Useful in cases where the raw printed form of a value
@@ -55,16 +52,3 @@ foreign import _spy :: forall a. Fn2 String a a
 -- | `Array.fromFoldable` here will print it in a more useful form.
 spyWith ∷ ∀ a b. DebugWarning ⇒ String → (a → b) → a → a
 spyWith msg f a = const a (spy msg (f a))
-
--- | Triggers any available debugging features in the current runtime - in a
--- | web browser with the debug tools open, this acts like setting a breakpoint
--- | in the script. If no debugging feature are available nothing will occur,
--- | although the passed contination will still be evaluated.
--- |
--- | Generally this works best by passing in a block of code to debug as the
--- | continuation argument, as stepping forward in the debugger will then drop
--- | straight into the passed code block.
-debugger :: forall a. DebugWarning => (Unit → a) -> a
-debugger f = runFn1 _debugger f
-
-foreign import _debugger :: forall a. Fn1 (Unit → a) a
